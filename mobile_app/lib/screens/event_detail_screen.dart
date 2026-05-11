@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 class EventDetailScreen extends StatefulWidget {
   final Event event;
 
+  // On passe l'objet événement sélectionné depuis l'écran de liste
   const EventDetailScreen({super.key, required this.event});
 
   @override
@@ -12,58 +13,65 @@ class EventDetailScreen extends StatefulWidget {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
-  // Clé pour la validation du formulaire
+  // Clé globale pour valider le formulaire (Section 4.1)
   final _formKey = GlobalKey<FormState>();
   
-  // Contrôleurs pour les champs du formulaire (Exigence Section 4.1)
+  // Contrôleurs pour récupérer les saisies utilisateur (Prénom, Nom, Email)
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   
+  // État pour gérer l'affichage du spinner pendant l'appel API (Section 4.2)
   bool _isLoading = false;
   final ApiService _apiService = ApiService();
 
   @override
   void dispose() {
+    // Bonne pratique : on libère les contrôleurs quand l'écran est fermé
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
     super.dispose();
   }
 
-  // Fonction de soumission de l'inscription
+  /// Logique d'envoi de l'inscription
   Future<void> _submitRegistration() async {
+    // 1. Validation côté client (Section 4.1)
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // Appel à l'API pour l'inscription
+      // 2. Appel au service API
       await _apiService.register(
         widget.event.id,
-        _firstNameController.text.trim(),
-        _lastNameController.text.trim(),
-        _emailController.text.trim(),
+        {
+          'firstName': _firstNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
+          'email': _emailController.text.trim(),
+        },
       );
 
-      // RETOUR SUCCÈS (Exigence Section 4.1)
+      // 3. Retour utilisateur en cas de SUCCÈS (Section 4.1)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Inscription réussie !"),
+            content: Text("Inscription validée avec succès !"),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
           ),
         );
-        // Retour à la liste après succès
-        Navigator.pop(context);
+        Navigator.pop(context); // Redirection vers la liste après succès
       }
     } catch (error) {
-      // RETOUR ERREUR LISIBLE (Exigence Section 4.1)
+      // 4. Retour utilisateur en cas d'ERREUR LISIBLE (Section 4.1)
+      // Affiche les erreurs 409 (email déjà pris) ou 422 (complet) renvoyées par le backend
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(error.toString()),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -75,100 +83,93 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final event = widget.event;
+    
+    // CONDITION CLÉ : Vérifie si l'événement est complet (Section 4.1)
+    final bool isFull = event.remainingPlaces <= 0;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Détail de l'événement"),
+        title: const Text("Détails de l'évènement"),
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- TOUTES LES INFORMATIONS DE L'ÉVÉNEMENT ---
+            // --- SECTION 1 : TOUTES LES INFOS DE L'ÉVÈNEMENT (Exigence 4.1) ---
             Text(
               event.title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 20, color: Colors.blue),
-                const SizedBox(width: 10),
-                Text(event.formattedDate, style: const TextStyle(fontSize: 16)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 20, color: Colors.blue),
-                const SizedBox(width: 10),
-                Text(event.location, style: const TextStyle(fontSize: 16)),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "Description",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 16),
+            _buildInfoRow(Icons.calendar_today, event.formattedDate),
+            const SizedBox(height: 8),
+            _buildInfoRow(Icons.location_on, event.location),
+            const SizedBox(height: 16),
             Text(
-              event.description ?? "Aucune description disponible pour cet événement.",
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              event.description ?? "Aucune description fournie.",
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
             ),
             
-            const Divider(height: 40),
+            const Divider(height: 48),
 
-            // --- COMPTEUR DE PLACES (Exigence : X places restantes sur Y) ---
+            // --- SECTION 2 : COMPTEUR DE PLACES X sur Y (Exigence 4.1) ---
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: event.isFull ? Colors.red.shade50 : Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(10),
+                color: isFull ? Colors.red.shade50 : Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: isFull ? Colors.red.shade200 : Colors.blue.shade200),
               ),
-              child: Text(
-                "${event.remainingPlaces} places restantes sur ${event.capacity}",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: event.isFull ? Colors.red : Colors.blue.shade800,
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    "${event.remainingPlaces} places restantes",
+                    style: TextStyle(
+                      fontSize: 20, 
+                      fontWeight: FontWeight.bold,
+                      color: isFull ? Colors.red.shade700 : Colors.blue.shade900,
+                    ),
+                  ),
+                  Text("sur une capacité totale de ${event.capacity} places"),
+                ],
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 32),
 
-            // --- FORMULAIRE OU MESSAGE SI COMPLET ---
-            // Exigence : "Désactive et remplace par un message si l'évènement est complet"
-            event.isFull ? _buildFullEventMessage() : _buildRegistrationForm(),
+            // --- SECTION 3 : GESTION DE L'ÉTAT COMPLET (Exigence 4.1) ---
+            // Si complet : affiche un message d'erreur et désactive l'inscription
+            // Sinon : affiche le formulaire d'inscription normal
+            isFull ? _buildFullEventMessage() : _buildRegistrationForm(),
           ],
         ),
       ),
     );
   }
 
-  // Widget affiché quand l'événement est complet
+  /// Widget affiché à la place du formulaire si l'événement est complet
   Widget _buildFullEventMessage() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: const Column(
         children: [
-          Icon(Icons.error_outline, color: Colors.red, size: 40),
-          SizedBox(height: 10),
+          Icon(Icons.error_outline, color: Colors.red, size: 48),
+          SizedBox(height: 12),
           Text(
-            "ÉVÉNEMENT COMPLET",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+            "ÉVÈNEMENT COMPLET",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
           ),
-          SizedBox(height: 5),
+          SizedBox(height: 8),
           Text(
-            "Les inscriptions sont désormais fermées pour cet événement.",
+            "Désolé, il n'y a plus de places disponibles pour cet évènement.",
             textAlign: TextAlign.center,
           ),
         ],
@@ -176,78 +177,68 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // Widget du formulaire d'inscription
+  /// Widget du formulaire d'inscription (Prénom, Nom, Email)
   Widget _buildRegistrationForm() {
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Formulaire d'inscription",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 15),
+          const Text("Formulaire d'inscription", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          _buildTextField(_firstNameController, "Prénom", Icons.person_outline),
+          const SizedBox(height: 16),
+          _buildTextField(_lastNameController, "Nom", Icons.person),
+          const SizedBox(height: 16),
+          _buildTextField(_emailController, "Email", Icons.email_outlined, isEmail: true),
+          const SizedBox(height: 32),
           
-          // Champ Prénom
-          TextFormField(
-            controller: _firstNameController,
-            decoration: const InputDecoration(
-              labelText: "Prénom",
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.person_outline),
-            ),
-            validator: (value) => value!.isEmpty ? "Veuillez entrer votre prénom" : null,
-          ),
-          const SizedBox(height: 15),
-
-          // Champ Nom
-          TextFormField(
-            controller: _lastNameController,
-            decoration: const InputDecoration(
-              labelText: "Nom",
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.person),
-            ),
-            validator: (value) => value!.isEmpty ? "Veuillez entrer votre nom" : null,
-          ),
-          const SizedBox(height: 15),
-
-          // Champ Email
-          TextFormField(
-            controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: "Email",
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.email_outlined),
-            ),
-            keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value!.isEmpty) return "Veuillez entrer votre email";
-              if (!value.contains('@')) return "Veuillez entrer un email valide";
-              return null;
-            },
-          ),
-          const SizedBox(height: 25),
-
-          // Bouton de validation (avec indicateur de chargement)
+          // BOUTON DE VALIDATION avec Loader (Section 4.2)
           SizedBox(
             width: double.infinity,
-            height: 55,
+            height: 56,
             child: ElevatedButton(
               onPressed: _isLoading ? null : _submitRegistration,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: Colors.blue.shade700,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: _isLoading 
-                ? const CircularProgressIndicator(color: Colors.white) // Exigence Section 4.2
-                : const Text("S'inscrire maintenant", style: TextStyle(fontSize: 16)),
+                ? const CircularProgressIndicator(color: Colors.white) 
+                : const Text("Confirmer l'inscription", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // Petit Helper pour construire les champs de texte rapidement
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isEmail = false}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      validator: (v) {
+        if (v == null || v.isEmpty) return "Ce champ est requis";
+        if (isEmail && !v.contains('@')) return "Email invalide";
+        return null;
+      },
+    );
+  }
+
+  // Petit Helper pour les lignes d'info (Icône + Texte)
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.blue),
+        const SizedBox(width: 12),
+        Text(text, style: const TextStyle(fontSize: 16)),
+      ],
     );
   }
 }

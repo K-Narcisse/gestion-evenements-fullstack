@@ -19,7 +19,7 @@ let events = [
         description: "Apprenez à maîtriser Riverpod et les animations complexes.",
         date: "2025-12-10T09:00:00Z",
         location: "BOBO Dioulasso, Burkina Faso",
-        capacity: 2, // Petite capacité pour tester facilement l'erreur 422
+        capacity: 0, // Petite capacité pour tester facilement l'erreur 422
         createdAt: "2024-02-15T14:30:00Z"
     },
     {

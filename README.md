@@ -1,43 +1,38 @@
-# Application de Gestion d'Événements
-
-Test technique pour le poste de Développeur Full Stack.
-
-## 📌 Présentation du projet
-Cette application permet de consulter une liste d'événements et de gérer les inscriptions avec un contrôle strict de la capacité et de l'unicité des participants (un seul email par événement).
-
-**Stack technique :**
-- **Backend :** Node.js (Express)
-- **Frontend :** Flutter (Dart)
-- **Stockage :** In-memory (Section 3.4) pour une exécution fluide et rapide lors du test.
-
-## 📁 Structure du projet
-- `/backend` : API REST Node.js organisée en couches (Routes, Controllers, Models, Data).
-- `/mobile_app` : Application Flutter organisée selon une architecture de type "Provider" (Models, Services, Providers, Screens, Widgets).
-
-## 🚀 Installation et Lancement
-
-### Backend
-1. `cd backend`
-2. `npm install`
-3. `node src/index.js` (L'API tourne par défaut sur http://localhost:3000)
-
-### Frontend (Flutter)
-1. `cd mobile_app`
-2. `flutter pub get`
-3. `flutter run`
-
-**Note sur la connectivité :**
-- Sur **Android Emulator**, l'URL de base est configurée sur `http://10.0.2.2:3000`.
-- Pour un test sur **appareil physique** (comme réalisé durant mon développement), l'URL a été configurée sur l'adresse IP locale du serveur : `http://192.168.1.68:3000`.
-
-## 🛠 Choix techniques et Interprétations
-- **Sécurité et Logique :** Validation des champs obligatoires via les modèles côté backend. Une vérification de la capacité est faite avant chaque inscription pour renvoyer une erreur 422 si l'événement est complet, et une erreur 409 si l'email est déjà utilisé.
-- **Gestion de capacité :** L'état "Complet" est géré dynamiquement. Côté Frontend, le formulaire d'inscription est désactivé et remplacé par un message d'information si la capacité est atteinte.
-- **UX :** Un indicateur de chargement (CircularProgressIndicator) est affiché durant les appels API. Les retours utilisateurs (succès ou erreurs 409/422) sont affichés via des SnackBars lisibles.
-
-## 📝 Historique des commits
-J'ai suivi une convention de nommage de commits claire pour refléter l'avancement :
-1. `feat: initial project structure`
-2. `feat(backend): implement event and registration models`
-3. `feat(backend): add capacity and email validation logic`
-4. `feat(frontend): implement event list and registration form`
+est Technique : Application de Gestion d'Événements
+Bonjour ! Voici mon rendu pour le test de Développeur Full Stack. L'objectif était de créer une solution simple et robuste pour gérer des inscriptions à des événements, en mettant l'accent sur la cohérence des données et l'expérience utilisateur.
+Le projet en bref
+L'application permet de parcourir une liste d'événements et de s'y inscrire.
+J'ai mis en place un contrôle strict côté serveur pour éviter les doublons (un email = une inscription par événement) et pour respecter la jauge de capacité.
+Ma stack technique :
+	Backend : Node.js avec Express.
+	Frontend: Flutter (Dart).
+	Stockage : J'ai utilisé un stockage In-memory (comme suggéré dans la section 3.4), ce qui permet de tester l'app immédiatement sans avoir à configurer une base de données externe.
+Structure du code
+J'ai opté pour une séparation claire des responsabilités pour faciliter la maintenance :
+	/backend: Architecture en couches classiques (Routes, Controllers, Models, Data).
+	/mobile_app : Organisation basée sur le pattern Provider pour une gestion d'état propre et réactive.
+Installation et Lancement
+1. Le Backend
+cd backend
+npm install
+node src/index.js
+L'API est accessible par défaut sur http://localhost:3000.
+2. L'application Flutter
+cd mobile_app
+flutter pub get
+flutter run
+Note sur la connectivité :
+Pour les tests sur un émulateur Android, l'URL pointe vers 10.0.2.2.
+Cependant, comme je préfère tester sur un appareil physique pour valider l'expérience réelle, j'ai configuré l'IP locale (192.168.1.68) dans le code. Pensez à la modifier dans les constantes du service si votre configuration réseau diffère.
+Mes choix et partis pris
+	Validation & Sécurité : La logique métier est centralisée sur le backend. Avant chaque inscription, le serveur vérifie la capacité restante (Erreur 422 si complet) et l'unicité de l'email (erreur 409).
+	UX / UI :
+J'ai ajouté un retour visuel systématique via des SnackBars pour que l'utilisateur sache si son inscription a réussi ou pourquoi elle a échoué.
+Si un événement est complet, le formulaire se désactive automatiquement pour éviter toute frustration inutile.
+Un loader est présent pour gérer les temps de latence réseau lors des appels API.
+Suivi du développement
+J'ai essayé de garder un historique de commits clair et atomique pour illustrer ma progression :
+	feat: initial project structure
+	feat(backend): implement event and registration, models
+	feat(backend): add capacity and email validation logic
+	feat(frontend): implement event list and registration form
