@@ -1,4 +1,4 @@
-est Technique : Application de Gestion d'Événements
+
 Bonjour ! Voici mon rendu pour le test de Développeur Full Stack. L'objectif était de créer une solution simple et robuste pour gérer des inscriptions à des événements, en mettant l'accent sur la cohérence des données et l'expérience utilisateur.
 Le projet en bref
 L'application permet de parcourir une liste d'événements et de s'y inscrire.
